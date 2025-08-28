@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  ml-model:
+    build: ./ml_model
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./data:/app/data
+      - ./simple_price_api.py:/app/simple_price_api.py
+    environment:
+      - PORT=5002
+  ui-app:
+    build: ./ui_app
+    ports:
+      - "8502:8502"
+    volumes:
+      - ./data:/app/data
+      - ./ui_app/ui.py:/app/ui.py
+    environment:
+      - STREAMLIT_SERVER_PORT=8502
+      - ML_API_URL=http://ml-model:5002
+    depends_on:
+      - ml-model
