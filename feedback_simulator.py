@@ -96,24 +96,32 @@ def load_or_create_feedback_history():
     """
     Load existing feedback history or create a new realistic one for demonstration
     """
-    feedback_file = 'data/demo_feedback_history.json'
+    import json
     
-    if os.path.exists(feedback_file):
-        # Load existing history
-        import json
-        with open(feedback_file, 'r') as f:
+    # First, try to load the comprehensive AI feedback history (500 records)
+    comprehensive_feedback_file = 'data/ai_feedback_history.json'
+    if os.path.exists(comprehensive_feedback_file):
+        with open(comprehensive_feedback_file, 'r') as f:
             feedback_history = json.load(f)
-        print(f"📚 Loaded existing feedback history: {len(feedback_history)} records")
-    else:
-        # Create new realistic history
-        feedback_history = create_realistic_feedback_history(50)
-        
-        # Save for future use
-        import json
-        os.makedirs('data', exist_ok=True)
-        with open(feedback_file, 'w') as f:
-            json.dump(feedback_history, f, indent=2)
-        print(f"✨ Created new demo feedback history: {len(feedback_history)} records")
+        print(f"📚 Loaded comprehensive AI feedback history: {len(feedback_history)} records")
+        return feedback_history
+    
+    # Fallback to smaller demo feedback
+    demo_feedback_file = 'data/demo_feedback_history.json'
+    if os.path.exists(demo_feedback_file):
+        with open(demo_feedback_file, 'r') as f:
+            feedback_history = json.load(f)
+        print(f"📚 Loaded demo feedback history: {len(feedback_history)} records")
+        return feedback_history
+    
+    # Create new realistic history
+    feedback_history = create_realistic_feedback_history(50)
+    
+    # Save for future use
+    os.makedirs('data', exist_ok=True)
+    with open(demo_feedback_file, 'w') as f:
+        json.dump(feedback_history, f, indent=2)
+    print(f"✨ Created new demo feedback history: {len(feedback_history)} records")
     
     return feedback_history
 

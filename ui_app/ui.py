@@ -927,11 +927,23 @@ with tab1:
                     with col2:
                         # Enhanced rationale with exploration vs exploitation explanation
                         tier = model_result.get('recommended_tier', 1.0)
-                        strategy_type = "Exploring new opportunities (±20% price variance)" if abs(tier - 1.0) > 0.05 else "Exploiting proven market strategies"
                         
-                        st.write(f"**Business Logic:** {strategy_type}")
-                        st.write(f"**Rationale:** {model_result.get('rationale', 'AI balances market testing with proven profit strategies')}")
-                        st.write(f"**Strategy:** {model_result.get('pricing_strategy', 'Dynamic Pricing')}")
+                        # Determine strategy type with more detailed explanation
+                        if abs(tier - 1.0) > 0.05:
+                            if tier > 1.0:
+                                strategy_type = "🔍 **Exploration Mode**: Testing premium pricing (market price +20%)"
+                                strategy_explanation = "AI is exploring higher profit margins to discover optimal pricing ceiling"
+                            else:
+                                strategy_type = "🔍 **Exploration Mode**: Testing competitive pricing (market price -20%)"
+                                strategy_explanation = "AI is exploring volume-driven strategies to capture market share"
+                        else:
+                            strategy_type = "💪 **Exploitation Mode**: Using proven market strategies"
+                            strategy_explanation = "AI is leveraging established pricing patterns that consistently deliver results"
+                        
+                        st.write(strategy_type)
+                        st.caption(strategy_explanation)
+                        st.write(f"**AI Rationale:** {model_result.get('rationale', 'Balancing market testing with proven profit strategies')}")
+                        st.write(f"**Pricing Strategy:** {model_result.get('pricing_strategy', 'Dynamic Pricing')}")
         
         # Multi-Market Model Comparison
         if 'multimarket_comparison_results' in st.session_state:
