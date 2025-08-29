@@ -1239,23 +1239,54 @@ with tab3:
             # Load demo feedback data
             import sys
             import os
+            
+            # Add both possible paths for container and local environment
+            sys.path.append('/app')
             sys.path.append('.')
+            sys.path.append(os.path.dirname(__file__))
+            
             from feedback_simulator import load_or_create_feedback_history
             
             demo_feedback = load_or_create_feedback_history()
             st.session_state['feedback_history'] = demo_feedback
             
-            # Show info about demo data
-            st.info("""
-            📊 **Demo Mode Active**: Since you haven't provided real feedback yet, 
-            we're showing you realistic simulated data to demonstrate the AI performance analysis capabilities.
+            # Show info about demo data with number of records loaded
+            st.success(f"""
+            📊 **Demo Mode Active**: Loaded {len(demo_feedback)} realistic AI feedback records to demonstrate 
+            the AI performance analysis capabilities.
             
             💡 **To see real data**: Use Tab 1 to make pricing decisions and provide feedback on actual outcomes.
             """)
             
-        except ImportError:
-            # Fallback if feedback_simulator is not available
-            pass
+        except Exception as e:
+            # Show detailed error for debugging
+            st.error(f"Error loading feedback data: {str(e)}")
+            # Try to load directly from file as fallback
+            try:
+                import json
+                feedback_file = '/app/data/ai_feedback_history.json' if os.path.exists('/app/data/ai_feedback_history.json') else 'data/ai_feedback_history.json'
+                if os.path.exists(feedback_file):
+                    with open(feedback_file, 'r') as f:
+                        demo_feedback = json.load(f)
+                    st.session_state['feedback_history'] = demo_feedback
+                    st.success(f"📊 **Loaded {len(demo_feedback)} AI feedback records directly from file**")
+            except Exception as fallback_error:
+                st.error(f"Fallback loading also failed: {str(fallback_error)}")
+                st.info("Creating minimal demo data for Tab 3 demonstration...")
+                # Create minimal demo data in-line
+                from datetime import datetime, timedelta
+                import random
+                minimal_feedback = []
+                for i in range(50):
+                    minimal_feedback.append({
+                        'timestamp': (datetime.now() - timedelta(days=50-i)).strftime('%Y-%m-%d %H:%M:%S'),
+                        'decision_id': f'demo_{i}',
+                        'tier': random.choice([0.9, 1.0, 1.1]),
+                        'reward': random.uniform(20, 120),
+                        'sale_outcome': random.choice(['Device Sold', 'Still in Inventory']),
+                        'features': {}
+                    })
+                st.session_state['feedback_history'] = minimal_feedback
     
     try:
         # Load analytics data for baseline comparison
