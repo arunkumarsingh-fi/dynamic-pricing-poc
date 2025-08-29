@@ -12,34 +12,18 @@ api_base = os.getenv('ML_API_URL', 'http://localhost:5002')
 
 # Configure page
 st.set_page_config(
-    page_title="Dynamic Pricing Bandit",
-    page_icon="📱",
+    page_title="Full Circle Exchange",
+    page_icon="🔄",
     layout="wide"
 )
 
-st.title('📱 Adaptive iPhone Pricing Bandit')
+st.title('🔄 Full Circle Exchange: End-to-End Asset Optimization')
 
 # Create tabs for different sections
-tab1, tab2, tab3 = st.tabs(["🏷️ Price Recommendation", "📊 Analytics Dashboard", "📈 Model Performance"])
+tab1, tab2, tab3 = st.tabs(["📱 Story of a Unit", "📈 Day of Business", "🚀 Optimized Business"])
 
 with tab1:
-    st.header('🚀 Strategic iPhone Pricing Assistant')
-    
-    # AI Model Selection (simplified)
-    st.subheader("🤖 AI Model Selection")
-    model_options = {
-        'LinTS': 'Linear Thompson Sampling (Recommended)',
-        'LinUCB': 'Linear Upper Confidence Bound',
-        'EpsilonGreedy': 'Epsilon Greedy'
-    }
-    selected_model = st.selectbox(
-        'Choose AI Model:', 
-        list(model_options.keys()),
-        format_func=lambda x: model_options[x],
-        help="Advanced ML models that learn from feedback to optimize pricing strategies"
-    )
-    
-    st.markdown("---")
+    st.header('📱 Story of a Unit: From Acquisition to Sale')
     
     # Simplified Device Profile Section
     st.subheader("📱 Device Profile")
@@ -159,7 +143,7 @@ with tab1:
             'Screen_Damage': screen_damage_num,
             'new_model_imminent': new_model_imminent,
             'market': selected_market.lower(),
-            'model': selected_model
+            'model': 'LinTS'  # Default model for all API calls
         }
         
         try:
@@ -172,35 +156,11 @@ with tab1:
                     model_response = requests.post(api_url, json=model_payload, timeout=10)
                     all_model_results[model_name] = model_response.json()
                 
-                # Display comparison of all models
-                st.subheader("🤖 AI Model Comparison")
-                comparison_data = []
-                for model_name, model_result in all_model_results.items():
-                    comparison_data.append({
-                        'Model': model_name,
-                        'Price (€)': model_result.get('recommended_price_eur', 0),
-                        'Strategy': model_result.get('pricing_strategy', 'N/A'),
-                        'Tier': model_result.get('recommended_tier', 'N/A'),
-                        'Rationale': model_result.get('rationale', 'Learning from feedback')
-                    })
-                
-                comparison_df = pd.DataFrame(comparison_data)
-                st.dataframe(comparison_df, use_container_width=True)
-                
-                # Show individual model explanations
-                st.subheader("🧠 Model Reasoning")
-                for model_name, model_result in all_model_results.items():
-                    with st.expander(f"{model_name} - {model_result.get('pricing_strategy', 'Strategy')}"):
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.metric("Recommended Price", f"€{model_result.get('recommended_price_eur', 0)}")
-                            st.metric("Confidence", f"{model_result.get('confidence_level', 0.5):.2f}")
-                        with col2:
-                            st.write(f"**Rationale:** {model_result.get('rationale', 'Balancing exploration vs exploitation')}")
-                            st.write(f"**Strategy:** {model_result.get('pricing_strategy', 'N/A')}")
+                # Store model results for display later
+                st.session_state['model_comparison_results'] = all_model_results
                 
                 # Use the originally selected model for session state
-                result = all_model_results[selected_model]
+                result = all_model_results['LinTS']  # Use default LinTS model
             else:
                 response = requests.post(api_url, json=payload, timeout=10)
                 result = response.json()
@@ -242,23 +202,24 @@ with tab1:
                 elif tier == 1.1:
                     st.success(f"🔺 **{strategy} Pricing** (Tier {tier})")
                 
-                st.metric("💰 Recommended Price", f"€{price_eur}")
-                st.metric("📈 Market Value", f"€{result.get('estimated_market_value', {}).get('eur', 0)}")
+                # Recommended Price with explanation
+                col_price, col_info = st.columns([3, 1])
+                with col_price:
+                    st.metric("💰 Recommended Price", f"€{price_eur}")
+                with col_info:
+                    if st.button("ℹ️", help=f"Price calculated using AI strategy '{strategy}' considering device condition, market dynamics, and profit optimization. Damage penalties excluded as device will be refurbished.", key="price_info"):
+                        st.info(f"Price calculated using AI strategy '{strategy}' considering device condition, market dynamics, and profit optimization. Damage penalties excluded as device will be refurbished.")
             
             with col2:
                 st.metric("📱 Market Segment", market_segment.title())
                 st.metric("⚡ Condition Score", f"{condition_score}/100")
-                st.metric("🤖 Model Used", result.get('model_used', selected_model))
+                st.metric("🤖 Model Used", result.get('model_used', 'LinTS'))
             
             # Show Recommended Buying Price prominently
             st.subheader("💰 Acquisition Recommendation")
             target_acquisition = result.get('target_acquisition_cost', {})
             if target_acquisition:
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.success(f"🎯 **Recommended Buying Price: €{target_acquisition.get('eur', 0):.2f}**")
-                with col2:
-                    st.info(f"📊 Market Value: €{result.get('estimated_market_value', {}).get('eur', 0):.2f}")
+                st.success(f"🎯 **Recommended Buying Price: €{target_acquisition.get('eur', 0):.2f}**")
                 st.caption("💡 This is the maximum price you should pay to acquire this device (70% of market value)")
             
             # Show detailed Cost Breakdown
@@ -299,10 +260,114 @@ with tab1:
                 pricing_df = pd.DataFrame(pricing_data)
                 st.dataframe(pricing_df, use_container_width=True, hide_index=True)
             
-            # Show impact analysis
+            # Device condition note (damage will be addressed in refurbishing)
             if (backglass_damage_num + screen_damage_num) > 0:
-                damage_penalty = (backglass_damage_num + screen_damage_num) * 0.15
-                st.warning(f"⚠️ Damage detected: Estimated price impact -{damage_penalty*100:.0f}%")
+                st.info("ℹ️ **Device Condition Note**: Any damage detected will be addressed during refurbishing process and does not impact the recommended selling price.")
+            
+            # Comprehensive Sales Price Calculator
+            st.subheader("📈 Sales Price Calculator & Time Value Analysis")
+            
+            if cost_breakdown and target_acquisition:
+                # Calculate comprehensive pricing breakdown
+                acquisition_cost = target_acquisition.get('eur', 0)
+                refurbishing_cost = cost_breakdown.get('refurbishing_cost_eur', 0)
+                operational_cost = price_eur * 0.10
+                total_base_costs = acquisition_cost + refurbishing_cost + operational_cost
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.markdown("**📉 Pricing Formula**")
+                    st.write(f"💰 **Base Costs**: €{total_base_costs:.2f}")
+                    st.write(f"  • Acquisition: €{acquisition_cost:.2f}")
+                    st.write(f"  • Refurbishing: €{refurbishing_cost:.2f}")
+                    st.write(f"  • Operations: €{operational_cost:.2f}")
+                    st.write("")
+                    st.write(f"🎯 **Target Selling Price**: €{price_eur:.2f}")
+                    base_profit = price_eur - total_base_costs
+                    base_margin = (base_profit / price_eur) * 100 if price_eur > 0 else 0
+                    st.write(f"💹 **Base Profit**: €{base_profit:.2f} ({base_margin:.1f}% margin)")
+                
+                with col2:
+                    st.markdown("**⏱️ Time Value Impact**")
+                    
+                    # Create time decay visualization
+                    import numpy as np
+                    days = np.arange(1, 91)  # 90 days
+                    
+                    # Time decay formula: value decreases by 0.5% per day after day 7
+                    time_decay = np.where(days <= 7, 1.0, 1.0 - (days - 7) * 0.005)
+                    time_decay = np.maximum(time_decay, 0.7)  # Floor at 70% of original value
+                    
+                    adjusted_prices = price_eur * time_decay
+                    adjusted_profits = adjusted_prices - total_base_costs
+                    
+                    # Create the decay chart
+                    fig = go.Figure()
+                    
+                    # Add selling price line
+                    fig.add_trace(go.Scatter(
+                        x=days,
+                        y=adjusted_prices,
+                        name='Selling Price (€)',
+                        line=dict(color='blue', width=3),
+                        hovertemplate='Day %{x}<br>Price: €%{y:.0f}<extra></extra>'
+                    ))
+                    
+                    # Add profit line
+                    fig.add_trace(go.Scatter(
+                        x=days,
+                        y=adjusted_profits,
+                        name='Net Profit (€)',
+                        line=dict(color='green', width=3),
+                        hovertemplate='Day %{x}<br>Profit: €%{y:.0f}<extra></extra>'
+                    ))
+                    
+                    # Add cost baseline
+                    fig.add_hline(y=total_base_costs, line_dash="dash", 
+                                 line_color="red", annotation_text="Break-even")
+                    
+                    fig.update_layout(
+                        title='Price & Profit Decay Over Time',
+                        xaxis_title='Days to Sell',
+                        yaxis_title='Amount (€)',
+                        hovermode='x unified',
+                        height=400
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                # Time-based recommendations
+                st.markdown("**📅 Time-Based Pricing Strategy**")
+                quick_sale_days = 7
+                medium_sale_days = 21
+                slow_sale_days = 60
+                
+                quick_price = price_eur * time_decay[quick_sale_days - 1]
+                medium_price = price_eur * time_decay[medium_sale_days - 1] 
+                slow_price = price_eur * time_decay[slow_sale_days - 1]
+                
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    quick_profit = quick_price - total_base_costs
+                    st.success(f"🚀 **Quick Sale (1-7 days)**")
+                    st.write(f"Price: €{quick_price:.2f}")
+                    st.write(f"Profit: €{quick_profit:.2f}")
+                    
+                with col2:
+                    medium_profit = medium_price - total_base_costs
+                    st.info(f"🔄 **Standard Sale (~{medium_sale_days} days)**")
+                    st.write(f"Price: €{medium_price:.2f}")
+                    st.write(f"Profit: €{medium_profit:.2f}")
+                    
+                with col3:
+                    slow_profit = slow_price - total_base_costs
+                    st.warning(f"🐌 **Slow Sale (~{slow_sale_days} days)**")
+                    st.write(f"Price: €{slow_price:.2f}")
+                    st.write(f"Profit: €{slow_profit:.2f}")
+                
+                st.info("💡 **Key Insight**: Every day after the first week reduces your profit by approximately €1-2 due to market depreciation and holding costs.")
                 
         except requests.exceptions.Timeout:
             st.error("⏰ Request timeout. Please make sure the ML API server is running on port 5002.")
@@ -321,7 +386,7 @@ with tab1:
             'Backglass_Damage': backglass_damage_num, 
             'Screen_Damage': screen_damage_num,
             'new_model_imminent': new_model_imminent,
-            'model': selected_model
+            'model': 'LinTS'  # Default model
         }
         
         try:
@@ -367,8 +432,11 @@ with tab1:
                                     st.write(f"**Strategy:** {best_option['pricing_strategy']}")
                                     st.write(f"**Rationale:** {model_result.get('rationale', 'Optimizing across all markets')}")
                 
+                # Store multimarket model results for display later
+                st.session_state['multimarket_comparison_results'] = all_multimarket_results
+                
                 # Use the originally selected model for session state
-                result = all_multimarket_results[selected_model]
+                result = all_multimarket_results['LinTS']  # Use default LinTS model
             else:
                 response = requests.post(api_url, json=payload, timeout=15)
                 result = response.json()
@@ -472,6 +540,93 @@ with tab1:
                                 color='Net Profit (€)', 
                                 color_continuous_scale='RdYlGn')
                     st.plotly_chart(fig, use_container_width=True)
+                
+                # Add Time Decay Analysis for Multi-Market
+                st.subheader("⏱️ Time Value Analysis (Best Market)")
+                
+                # Calculate time decay for the best market option
+                import numpy as np
+                days = np.arange(1, 91)  # 90 days
+                
+                # Time decay formula: value decreases by 0.5% per day after day 7
+                time_decay = np.where(days <= 7, 1.0, 1.0 - (days - 7) * 0.005)
+                time_decay = np.maximum(time_decay, 0.7)  # Floor at 70% of original value
+                
+                best_selling_price = best_option['selling_price_eur']
+                best_total_costs = (
+                    best_option['cost_breakdown']['acquisition_cost_eur'] +
+                    best_option['cost_breakdown']['refurbishing_cost_eur'] +
+                    best_option['cost_breakdown']['logistics_cost_eur'] +
+                    best_option['cost_breakdown']['operational_cost_eur']
+                )
+                
+                adjusted_prices = best_selling_price * time_decay
+                adjusted_profits = adjusted_prices - best_total_costs
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    # Create the multi-market decay chart
+                    fig = go.Figure()
+                    
+                    # Add selling price line
+                    fig.add_trace(go.Scatter(
+                        x=days,
+                        y=adjusted_prices,
+                        name=f'{best_option["market"].title()} Price (€)',
+                        line=dict(color='blue', width=3),
+                        hovertemplate='Day %{x}<br>Price: €%{y:.0f}<extra></extra>'
+                    ))
+                    
+                    # Add profit line
+                    fig.add_trace(go.Scatter(
+                        x=days,
+                        y=adjusted_profits,
+                        name='Net Profit (€)',
+                        line=dict(color='green', width=3),
+                        hovertemplate='Day %{x}<br>Profit: €%{y:.0f}<extra></extra>'
+                    ))
+                    
+                    # Add cost baseline
+                    fig.add_hline(y=best_total_costs, line_dash="dash", 
+                                 line_color="red", annotation_text="Break-even")
+                    
+                    fig.update_layout(
+                        title=f'Price & Profit Decay Over Time ({best_option["market"].title()})',
+                        xaxis_title='Days to Sell',
+                        yaxis_title='Amount (€)',
+                        hovermode='x unified',
+                        height=400
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                with col2:
+                    # Time-based recommendations for multi-market
+                    st.markdown("**📅 Time-Based Strategy**")
+                    
+                    quick_sale_days = 7
+                    medium_sale_days = 21
+                    slow_sale_days = 60
+                    
+                    quick_price = best_selling_price * time_decay[quick_sale_days - 1]
+                    medium_price = best_selling_price * time_decay[medium_sale_days - 1] 
+                    slow_price = best_selling_price * time_decay[slow_sale_days - 1]
+                    
+                    quick_profit = quick_price - best_total_costs
+                    medium_profit = medium_price - best_total_costs
+                    slow_profit = slow_price - best_total_costs
+                    
+                    st.success(f"🚀 **Quick Sale (1-7 days)**")
+                    st.write(f"Price: €{quick_price:.2f} | Profit: €{quick_profit:.2f}")
+                    
+                    st.info(f"🔄 **Standard Sale (~{medium_sale_days} days)**")
+                    st.write(f"Price: €{medium_price:.2f} | Profit: €{medium_profit:.2f}")
+                    
+                    st.warning(f"🐌 **Slow Sale (~{slow_sale_days} days)**")
+                    st.write(f"Price: €{slow_price:.2f} | Profit: €{slow_profit:.2f}")
+                    
+                    st.info(f"💡 **Market Advantage**: {best_option['market'].title()} market selected for optimal profit-time balance.")
                 
                 # Business insight
                 if 'business_insight' in result:
@@ -729,9 +884,93 @@ with tab1:
                     st.error("Failed to send feedback")
             except Exception as e:
                 st.error(f"Error sending feedback: {str(e)}")
+    
+    # Model Selection and Reasoning (moved to bottom for better UX flow)
+    if show_model_comparison and ('model_comparison_results' in st.session_state or 'multimarket_comparison_results' in st.session_state):
+        st.markdown("---")
+        st.header("🧠 Advanced AI Model Analysis")
+        
+        # Single Market Model Comparison
+        if 'model_comparison_results' in st.session_state:
+            st.subheader("🤖 Single Market AI Model Comparison")
+            all_model_results = st.session_state['model_comparison_results']
+            
+            comparison_data = []
+            for model_name, model_result in all_model_results.items():
+                comparison_data.append({
+                    'Model': model_name,
+                    'Price (€)': model_result.get('recommended_price_eur', 0),
+                    'Strategy': model_result.get('pricing_strategy', 'N/A'),
+                    'Tier': model_result.get('recommended_tier', 'N/A'),
+                    'Rationale': model_result.get('rationale', 'Learning from feedback')
+                })
+            
+            comparison_df = pd.DataFrame(comparison_data)
+            st.dataframe(comparison_df, use_container_width=True)
+            
+            # Show individual model explanations
+            st.subheader("🧠 Model Reasoning Details")
+            for model_name, model_result in all_model_results.items():
+                with st.expander(f"{model_name} - {model_result.get('pricing_strategy', 'Strategy')}"):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric("Recommended Price", f"€{model_result.get('recommended_price_eur', 0)}")
+                        # Convert confidence to business-friendly tier
+                        confidence = model_result.get('confidence_level', 0.5)
+                        if confidence >= 0.8:
+                            confidence_tier = "Strong 💪"
+                        elif confidence >= 0.6:
+                            confidence_tier = "High 🔥"
+                        else:
+                            confidence_tier = "Medium ⚡"
+                        st.metric("AI Certainty", confidence_tier)
+                    with col2:
+                        # Enhanced rationale with exploration vs exploitation explanation
+                        tier = model_result.get('recommended_tier', 1.0)
+                        strategy_type = "Exploring new opportunities (±20% price variance)" if abs(tier - 1.0) > 0.05 else "Exploiting proven market strategies"
+                        
+                        st.write(f"**Business Logic:** {strategy_type}")
+                        st.write(f"**Rationale:** {model_result.get('rationale', 'AI balances market testing with proven profit strategies')}")
+                        st.write(f"**Strategy:** {model_result.get('pricing_strategy', 'Dynamic Pricing')}")
+        
+        # Multi-Market Model Comparison
+        if 'multimarket_comparison_results' in st.session_state:
+            st.subheader("🌍 Multi-Market AI Model Comparison")
+            all_multimarket_results = st.session_state['multimarket_comparison_results']
+            
+            multimarket_comparison_data = []
+            for model_name, model_result in all_multimarket_results.items():
+                if 'best_option' in model_result and model_result['best_option']:
+                    best_option = model_result['best_option']
+                    multimarket_comparison_data.append({
+                        'Model': model_name,
+                        'Best Market': best_option['market'],
+                        'Net Profit (€)': best_option['net_profit_eur'],
+                        'Selling Price (€)': best_option['selling_price_eur'],
+                        'Strategy': best_option['pricing_strategy'],
+                        'Rationale': model_result.get('rationale', 'Multi-market optimization')
+                    })
+            
+            if multimarket_comparison_data:
+                multimarket_df = pd.DataFrame(multimarket_comparison_data)
+                st.dataframe(multimarket_df, use_container_width=True)
+                
+                # Show individual model explanations for multi-market
+                st.subheader("🌍 Multi-Market Model Reasoning Details")
+                for model_name, model_result in all_multimarket_results.items():
+                    if 'best_option' in model_result and model_result['best_option']:
+                        best_option = model_result['best_option']
+                        with st.expander(f"{model_name} - {best_option['market']} Market"):
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.metric("Best Market", best_option['market'])
+                                st.metric("Net Profit", f"€{best_option['net_profit_eur']}")
+                            with col2:
+                                st.write(f"**Strategy:** {best_option['pricing_strategy']}")
+                                st.write(f"**Rationale:** {model_result.get('rationale', 'Optimizing across all markets')}")
 
 with tab2:
-    st.header("📊 Enhanced Analytics Dashboard")
+    st.header("📈 Day of Business: Portfolio Analytics")
     
     # Load enhanced analytics data
     try:
@@ -894,45 +1133,84 @@ with tab2:
         # Condition vs Profit Analysis
         st.subheader("🔧 Condition Impact Analysis")
         
-        # Create damage categories
-        filtered_df['condition_category'] = filtered_df['has_damage'].apply(
-            lambda x: 'Damaged' if x else 'Undamaged'
-        )
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Treemap showing model/condition breakdown
-            condition_model_profit = filtered_df.groupby(['model', 'condition_category']).agg({
-                'profit_eur': 'sum',
-                'selling_price_eur': 'count'
-            }).reset_index()
-            condition_model_profit.columns = ['Model', 'Condition', 'Total_Profit', 'Volume']
+        try:
+            # Create damage categories
+            filtered_df['condition_category'] = filtered_df['has_damage'].apply(
+                lambda x: 'Damaged' if x else 'Undamaged'
+            )
             
-            if len(condition_model_profit) > 0:
-                fig = px.treemap(condition_model_profit, 
-                                path=['Model', 'Condition'], 
-                                values='Volume',
-                                color='Total_Profit',
-                                title='Sales Volume & Profit by Model/Condition')
-                st.plotly_chart(fig, use_container_width=True)
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Treemap showing model/condition breakdown
+                try:
+                    condition_model_profit = filtered_df.groupby(['model', 'condition_category']).agg({
+                        'profit_eur': 'sum',
+                        'selling_price_eur': 'count'
+                    }).reset_index()
+                    condition_model_profit.columns = ['Model', 'Condition', 'Total_Profit', 'Volume']
+                    
+                    if len(condition_model_profit) > 0:
+                        fig = px.treemap(condition_model_profit, 
+                                        path=['Model', 'Condition'], 
+                                        values='Volume',
+                                        color='Total_Profit',
+                                        title='Sales Volume & Profit by Model/Condition')
+                        st.plotly_chart(fig, use_container_width=True)
+                except Exception as treemap_error:
+                    st.warning(f"Treemap visualization not available: {str(treemap_error)}")
+                    # Show alternative visualization
+                    damage_summary = filtered_df.groupby('condition_category')['profit_eur'].sum().reset_index()
+                    fig = px.bar(damage_summary, x='condition_category', y='profit_eur',
+                                title='Total Profit by Condition')
+                    st.plotly_chart(fig, use_container_width=True)
+            
+            with col2:
+                # Simplified condition summary using basic operations
+                try:
+                    # Use more compatible pandas operations
+                    condition_groups = filtered_df.groupby('condition_category')
+                    
+                    summary_data = []
+                    for condition, group in condition_groups:
+                        summary_data.append({
+                            'Condition': condition,
+                            'Avg Profit (€)': round(group['profit_eur'].mean(), 2),
+                            'Total Profit (€)': round(group['profit_eur'].sum(), 2), 
+                            'Count': len(group),
+                            'Avg Days to Sell': round(group['days_to_sell'].mean(), 2),
+                            'Avg Margin': round(group['profit_margin'].mean(), 3)
+                        })
+                    
+                    condition_summary = pd.DataFrame(summary_data)
+                    condition_summary = condition_summary.set_index('Condition')
+                    
+                    st.subheader("📊 Condition Summary")
+                    st.dataframe(condition_summary, use_container_width=True)
+                    
+                except Exception as summary_error:
+                    st.error(f"Condition analysis error: {str(summary_error)}")
+                    # Minimal fallback
+                    damaged_count = len(filtered_df[filtered_df['has_damage'] == True])
+                    undamaged_count = len(filtered_df[filtered_df['has_damage'] == False])
+                    st.write(f"Damaged devices: {damaged_count}")
+                    st.write(f"Undamaged devices: {undamaged_count}")
+                
+                # Damage impact on profit margin - simplified
+                try:
+                    fig = px.box(filtered_df, x='condition_category', y='profit_margin',
+                                title='Profit Margin Distribution by Condition')
+                    st.plotly_chart(fig, use_container_width=True)
+                except Exception as box_error:
+                    st.warning(f"Box plot not available: {str(box_error)}")
+                    # Alternative: simple histogram
+                    fig = px.histogram(filtered_df, x='profit_margin', color='condition_category',
+                                     title='Profit Margin Distribution by Condition')
+                    st.plotly_chart(fig, use_container_width=True)
         
-        with col2:
-            # Condition summary statistics
-            condition_summary = filtered_df.groupby('condition_category').agg({
-                'profit_eur': ['mean', 'sum', 'count'],
-                'days_to_sell': 'mean',
-                'profit_margin': 'mean'
-            }).round(2)
-            condition_summary.columns = ['Avg Profit (€)', 'Total Profit (€)', 'Count', 'Avg Days to Sell', 'Avg Margin']
-            
-            st.subheader("📊 Condition Summary")
-            st.dataframe(condition_summary, use_container_width=True)
-            
-            # Damage impact on profit margin
-            fig = px.box(filtered_df, x='condition_category', y='profit_margin',
-                        title='Profit Margin Distribution by Condition')
-            st.plotly_chart(fig, use_container_width=True)
+        except Exception as condition_error:
+            st.error(f"Condition Impact Analysis unavailable: {str(condition_error)}")
+            st.info("📊 Alternative: Check the scatter plot above for condition insights")
         
     except FileNotFoundError:
         st.warning("📋 Analytics data not available. Please run the ETL process first to generate analytics_data.csv.")
@@ -941,7 +1219,31 @@ with tab2:
         st.error(f"Error loading analytics data: {str(e)}")
 
 with tab3:
-    st.header("📈 Model Performance & Business Value")
+    st.header("🚀 Optimized Business: AI-Driven Performance")
+    
+    # Auto-populate with demo data if no real feedback exists (for demonstration)
+    if 'feedback_history' not in st.session_state or len(st.session_state.get('feedback_history', [])) < 5:
+        try:
+            # Load demo feedback data
+            import sys
+            import os
+            sys.path.append('.')
+            from feedback_simulator import load_or_create_feedback_history
+            
+            demo_feedback = load_or_create_feedback_history()
+            st.session_state['feedback_history'] = demo_feedback
+            
+            # Show info about demo data
+            st.info("""
+            📊 **Demo Mode Active**: Since you haven't provided real feedback yet, 
+            we're showing you realistic simulated data to demonstrate the AI performance analysis capabilities.
+            
+            💡 **To see real data**: Use Tab 1 to make pricing decisions and provide feedback on actual outcomes.
+            """)
+            
+        except ImportError:
+            # Fallback if feedback_simulator is not available
+            pass
     
     try:
         # Load analytics data for baseline comparison
@@ -949,7 +1251,7 @@ with tab3:
         analytics_data_path = '/app/data/analytics_data.csv' if os.path.exists('/app/data/analytics_data.csv') else os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'analytics_data.csv')
         baseline_df = pd.read_csv(analytics_data_path)
         
-        # Check if we have feedback history from live recommendations
+        # Check if we have feedback history from live recommendations or demo data
         if 'feedback_history' in st.session_state and st.session_state['feedback_history']:
             feedback_df = pd.DataFrame(st.session_state['feedback_history'])
             

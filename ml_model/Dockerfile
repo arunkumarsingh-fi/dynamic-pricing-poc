@@ -3,5 +3,5 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
-# Use enhanced price recommendation API
-CMD ["python", "ml_model/price_recommendation_app.py"]
+EXPOSE 5002
+CMD ["python", "price_recommendation_app.py"]
