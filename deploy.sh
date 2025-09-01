@@ -43,13 +43,26 @@ cleanup_podman() {
 
 # Function to generate demo data if needed
 generate_demo_data() {
+    echo "📊 Setting up data pipeline..."
+    
+    # Create data directory
+    mkdir -p data
+    
+    # Step 1: Generate synthetic transaction data
     if [ ! -f "data/analytics_data.csv" ]; then
-        echo "📊 Generating demo data..."
-        python etl_worker/etl_task.py
-        echo "✅ Demo data generated"
+        echo "📈 Generating synthetic transaction data (10k records)..."
+        if command -v python3 &> /dev/null; then
+            python3 data_simulator.py
+        else
+            python data_simulator.py
+        fi
+        echo "✅ Transaction data generated"
     else
-        echo "✅ Demo data already exists"
+        echo "✅ Transaction data already exists"
     fi
+    
+    # Note: ML data files will be generated inside containers during startup
+    echo "✅ Data pipeline setup complete"
 }
 
 # Main deployment function

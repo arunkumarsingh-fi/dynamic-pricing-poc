@@ -131,12 +131,39 @@ curl http://localhost:5002/health
 
 **Problem**: No analytics data showing
 ```bash
-# Regenerate demo data
+# Generate synthetic data first
+python data_simulator.py
+
+# Then process it for ML (if running in containers, data will auto-generate)
+# For local development:
 python etl_worker/etl_task.py
 
 # Restart containers to pick up new data
 ./deploy.sh restart
 ```
+
+**Problem**: UI shows "Connection error" for ML API
+```bash
+# Check container status
+podman ps
+
+# Check ML API health
+curl http://localhost:5002/health
+
+# Check container networking (containers should be on same network)
+podman inspect full-circle-ml | grep IPAddress
+podman inspect full-circle-ui | grep IPAddress
+
+# If networking issues, rebuild containers
+./deploy.sh clean
+./deploy.sh deploy
+```
+
+**Problem**: API endpoints return "Method not allowed"
+- Only `/health` supports GET requests (browser access)
+- All other endpoints require POST with JSON data
+- Use the Streamlit UI at http://localhost:8502 for interactive testing
+- For API testing, use: `./test_api.sh`
 
 ### Port Configuration
 - **UI Port**: 8502 (not 8501 to avoid conflicts)

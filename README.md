@@ -97,13 +97,17 @@ cd dynamic_pricing_poc
 
 ### Local Development (No Containers)
 ```bash
-# 1. Generate demo data
-python etl_worker/etl_task.py
+# 1. Install Python dependencies
+pip install -r ml_model/requirements.txt
+pip install -r ui_app/requirements.txt
 
-# 2. Start ML API (Terminal 1)
+# 2. Generate demo data
+python data_simulator.py
+
+# 3. Start ML API (Terminal 1)
 python ml_model/price_recommendation_app.py
 
-# 3. Start UI (Terminal 2)  
+# 4. Start UI (Terminal 2)  
 streamlit run ui_app/ui.py --server.port=8502
 ```
 
